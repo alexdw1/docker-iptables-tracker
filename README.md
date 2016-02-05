@@ -1,6 +1,8 @@
 # docker-iptables-tracker
 
-The purpose is to manage iptables rules based on container names.  If a container is shutdown, then the rule assosiated with its name is also removed.  If the container is started again, then same rule will be automatically applied.  __SERVERIP__ will be replaced with the IP found in /etc/hosts for the dockername.  
+The purpose is to manage iptables rules inside a container assosiated with other containers on the same host and docker network.
+
+If a container is shutdown, then the rule assosiated with its name is also removed.  If the container is started again, then same rule will be automatically applied.  \_\_SERVERIP__ will be replaced with the IP found in /etc/hosts for the dockername.  
 
 >INFO: DOCKER automatically populates /etc/hosts will all dockers running on that host.
 
