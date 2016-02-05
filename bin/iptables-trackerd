@@ -61,4 +61,5 @@ while true; do
 		fi
 	done < <(grep -v -e __NEW__ -e __NORCD__ $TRACKINGFILE) #Grep anything NOT NEW.
 
+	sleep 30
 done
