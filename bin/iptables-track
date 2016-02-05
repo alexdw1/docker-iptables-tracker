@@ -1,0 +1,34 @@
+#!/bin/bash
+function print_help {
+cat <<EOF
+     	IPTables Tracker
+===============================================
+Due to the nature of docker spinning up and down containers with them getting new IPs, we use this to track iptables rules.
+
+        -h | --host		host to track
+        -t | --iptables         ipables rule without -A using hostname 
+_______________________________________________
+by SneakyScampi
+EOF
+}
+DEBUG=false
+OPTS=`getopt -o h:t: --long host:,iptables: -n 'parse-options' -- "$@"`
+if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
+
+eval set -- "$OPTS"
+while true; do
+  case "$1" in
+        -h | --host )           HOST="$2"; shift; shift ;;
+        -t | --iptables )       IPTABLESRULE="$2"; shift; shift ;;
+        -- ) shift; break ;;
+        * ) break ;;
+  esac
+done
+
+if [ -z "$HOST" ] || [ -z "$IPTABLESRULE" ]; then
+	print_help
+	exit 1
+fi
+
+
+echo "$HOST|$IPTABLESRULE|__NEW__" >> /var/spool/iptables-trackerd.txt

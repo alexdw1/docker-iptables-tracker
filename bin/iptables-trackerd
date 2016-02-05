@@ -1,0 +1,60 @@
+#!/bin/bash
+#Starting IPTables Tracking Daemon
+
+TRACKINGFILE=/var/spool/iptables-trackerd.txt
+
+while true; do
+
+	#This loop deals with new requests __NEW__ or old ones that failed lookup last time __NORCD__.
+	while read -r LINE ; do
+		#Check line is not empty
+		if [ -z "$LINE" ]; then
+			continue
+		fi
+
+		SERVERNAME=`echo $LINE |  cut -d"|" -f1`
+		RULE=`echo $LINE |  cut -d"|" -f2`
+		
+		#Lets look in /etc/hosts and see if it exists
+
+		##TODO Lock down the grep so we know we get the right hostname :)
+		SERVERIP=`grep "$SERVERNAME" /etc/hosts | head -n1 | cut -f1`
+		if [ -z "$SERVERIP" ]; then
+			continue
+		fi
+	
+		# Bash Find and Replace for the iptables rule
+		IPTABLESRULE=${RULE/__SERVERIP__/$SERVERIP}
+		echo "Adding Rule into IPTABLES: $LINE"
+		iptables -w -A $IPTABLESRULE
+
+		#Rebuild line in file so the 3rd field is the IP and not __NEW__
+		sed -i -e "s/$LINE/$SERVERNAME\|$RULE\|$SERVERIP/g" $TRACKINGFILE	
+
+	done < <(grep -e __NEW__ -e __NORCD__ $TRACKINGFILE)
+	
+	#This Loop checks for any records that are old.
+	while read -r LINE ; do
+	        #Check line is not empty
+	        if [ -z "$LINE" ]; then
+	                continue
+	        fi
+		SERVERNAME=`echo $LINE |  cut -d"|" -f1`
+	        RULE=`echo $LINE |  cut -d"|" -f2`
+	        SERVERIP=`echo $LINE |  cut -d"|" -f3`
+		HOSTSFILE=`cat /etc/hosts`
+	
+		HOSTS=`cat /etc/hosts`
+
+		CHECK=`echo $HOSTS | grep $SERVERNAME | grep $SERVERIP`
+	
+		if [ -z "$CHECK" ]; then
+			echo "Removing IPTABLES Rule: $LINE"
+			IPTABLESRULE=${RULE/__SERVERIP__/$SERVERIP}
+	       	 	iptables -w -D $IPTABLESRULE
+			#sed -i -e "/$LINE/d" $TRACKINGFILE  #This would delete the line (lets not do that now, but chancge to __NORCD)
+			sed -i -e "s/$LINE/$SERVERNAME\|$RULE\|__NORCD__/g" $TRACKINGFILE
+		fi
+	done < <(grep -v -e __NEW__ -e __NORCD__ $TRACKINGFILE) #Grep anything NOT NEW.
+
+done
