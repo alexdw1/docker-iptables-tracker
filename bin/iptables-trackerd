@@ -2,7 +2,7 @@
 #Starting IPTables Tracking Daemon
 
 TRACKINGFILE=/var/spool/iptables-trackerd.txt
-if [ -z $TRACKINGFILE ]; then
+if [ ! -f "$TRACKINGFILE" ]; then
 	touch $TRACKINGFILE
 fi
 
